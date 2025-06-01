@@ -3,6 +3,7 @@ import BioTool1 from "./pages/BioTool1";
 import Home from "./pages/Index"; // adjust if different
 import RNASeq from "./pages/RNASeq"; // adjust if different
 import Interactions from "./pages/Interactions";
+import CRISPR from "./pages/CRISPR";
 
 function App() {
   return (
@@ -12,6 +13,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/orf" element={<BioTool1 />} />
         <Route path="/interactions" element={<Interactions />} />
+        <Route path="/crispr" element={<CRISPR />} />
       </Routes>
     </Router>
   );
