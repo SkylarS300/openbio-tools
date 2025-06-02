@@ -8,6 +8,7 @@ class CRISPRRequest(BaseModel):
     sequence: str
     min_gc: float = 40.0
     max_gc: float = 60.0
+    min_score: int = 0
 
 class Guide(BaseModel):
     guide: str
@@ -15,6 +16,25 @@ class Guide(BaseModel):
     strand: str
     pam: str
     gc: float
+    score: int
+
+def score_guide(guide: str, position: int, seq_len: int) -> int:
+    gc_count = guide.count("G") + guide.count("C")
+    gc_content = gc_count / len(guide)
+
+    # GC score (ideal range 40–60%)
+    if 0.4 <= gc_content <= 0.6:
+        gc_score = 40
+    else:
+        gc_score = int(40 * (1 - abs(gc_content - 0.5) * 2))
+
+    # Penalty for poly-T sequence
+    poly_t_penalty = -20 if "TTTT" in guide else 0
+
+    # Position score favors guides earlier in the sequence
+    pos_score = int(40 * (1 - position / seq_len))
+
+    return max(0, gc_score + poly_t_penalty + pos_score)
 
 @router.post("/crispr/guides", response_model=List[Guide])
 def find_guides(data: CRISPRRequest):
@@ -24,16 +44,18 @@ def find_guides(data: CRISPRRequest):
 
     guides = []
 
-    # + strand: look for 20bp followed by NGG
+    # + strand
     for i in range(len(seq) - 23):
         window = seq[i:i+23]
         guide, pam = window[:20], window[20:]
         if pam[1:] == "GG":
             gc = gc_content(guide)
             if data.min_gc <= gc <= data.max_gc:
-                guides.append(Guide(guide=guide, start=i, strand="+", pam=pam, gc=gc))
+                score = score_guide(guide, i, len(seq))
+                if score >= data.min_score:
+                    guides.append(Guide(guide=guide, start=i, strand="+", pam=pam, gc=gc, score=score))
 
-    # - strand: check reverse complement
+    # - strand (reverse complement)
     rev_seq = reverse_complement(seq)
     for i in range(len(rev_seq) - 23):
         window = rev_seq[i:i+23]
@@ -42,7 +64,11 @@ def find_guides(data: CRISPRRequest):
             orig_index = len(seq) - (i + 23)
             gc = gc_content(guide)
             if data.min_gc <= gc <= data.max_gc:
-                guides.append(Guide(guide=guide, start=orig_index, strand="-", pam=pam, gc=gc))
+                score = score_guide(guide, i, len(seq))
+                if score >= data.min_score:
+                    guides.append(Guide(guide=guide, start=orig_index, strand="-", pam=pam, gc=gc, score=score))
+
+    guides.sort(key=lambda g: g.score, reverse=True)
 
     return guides
 
