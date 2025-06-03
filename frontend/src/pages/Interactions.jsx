@@ -7,19 +7,30 @@ cytoscape.use(qtip);
 
 function Interactions() {
     const [gene, setGene] = useState("");
+    const [viewUrl, setViewUrl] = useState(null);
     const [elements, setElements] = useState([]);
     const [error, setError] = useState("");
+    const [loading, setLoading] = useState(false);
     const [selectedNode, setSelectedNode] = useState(null);
     const cyRef = useRef(null);
+    const inputRef = useRef(null);
+
+    useEffect(() => {
+        if (inputRef.current) {
+            inputRef.current.focus();
+        }
+    }, []);
 
     const fetchInteractions = async (e) => {
         e.preventDefault();
         setError("");
+        setLoading(true);
         setElements([]);
         setSelectedNode(null);
 
         if (!gene.trim()) {
             setError("Please enter a gene symbol.");
+            setLoading(false);
             return;
         }
 
@@ -35,45 +46,93 @@ function Interactions() {
             if (!response.ok) {
                 const data = await response.json();
                 setError(data.detail || "Failed to fetch interactions.");
+                setLoading(false);
                 return;
             }
 
             const data = await response.json();
             const cyElements = [
-                ...data.nodes.map((n) => ({ data: { id: n.id, label: n.label, description: n.description || "" } })),
+                ...data.nodes.map((n) => ({
+                    data: {
+                        id: n.id,
+                        label: n.label,
+                        description: n.description || ""
+                    }
+                })),
                 ...data.edges.map((e) => ({
                     data: {
                         source: e.source,
                         target: e.target,
                         score: e.score,
-                        label: e.score?.toFixed ? e.score.toFixed(2) : e.label || "0.00",
-                    },
+                        label: e.label || "0.00"
+                    }
                 })),
             ];
-
             setElements(cyElements);
+            setViewUrl(data.view_url || null); // NEW
+
         } catch (err) {
             setError("Server error. Is FastAPI running?");
+        } finally {
+            setLoading(false);
         }
     };
 
+    const clearAll = () => {
+        setGene("");
+        setElements([]);
+        setSelectedNode(null);
+        setError("");
+        if (inputRef.current) inputRef.current.focus();
+    };
+
     return (
-        <div style={{ padding: "2rem", fontFamily: "Arial" }}>
+        <div>
             <h1>🔗 Protein Interaction Network</h1>
-            <form onSubmit={fetchInteractions}>
+            <form onSubmit={fetchInteractions} style={{ marginBottom: "1rem" }}>
                 <input
+                    ref={inputRef}
                     type="text"
                     value={gene}
                     onChange={(e) => setGene(e.target.value)}
                     placeholder="Enter gene symbol (e.g. TP53)"
+                    style={{ padding: "0.5rem", width: "220px", borderRadius: "6px", border: "1px solid #ccc" }}
                 />
-                <button type="submit" style={{ marginLeft: "1rem" }}>
+                <button type="submit" style={{ marginLeft: "0.5rem" }}>
                     Search
                 </button>
             </form>
-            {error && <p style={{ color: "red" }}>{error}</p>}
+
+            {loading && <p style={{ color: "#888", fontStyle: "italic" }}>Loading network...</p>}
+
+            {error && (
+                <div style={{
+                    background: "#3c1f1f",
+                    padding: "1rem",
+                    borderRadius: "8px",
+                    color: "#ffdddd",
+                    marginBottom: "1rem"
+                }}>
+                    <strong>Error:</strong> {error}
+                    <button
+                        onClick={() => setError("")}
+                        style={{
+                            marginLeft: "1rem",
+                            background: "#552222",
+                            border: "none",
+                            padding: "0.25rem 0.5rem",
+                            borderRadius: "4px",
+                            color: "#fff",
+                            cursor: "pointer"
+                        }}
+                    >
+                        Dismiss
+                    </button>
+                </div>
+            )}
+
             {elements.length > 0 && (
-                <div style={{ marginTop: "2rem", border: "1px solid #ccc" }}>
+                <div style={{ marginTop: "2rem" }}>
                     <CytoscapeComponent
                         cy={(cy) => {
                             cyRef.current = cy;
@@ -87,7 +146,7 @@ function Interactions() {
                             });
                         }}
                         elements={elements}
-                        style={{ width: "100%", height: "500px" }}
+                        style={{ width: "100%", height: "500px", border: "1px solid #ccc", borderRadius: "10px" }}
                         layout={{
                             name: "cose",
                             animate: true,
@@ -126,7 +185,7 @@ function Interactions() {
                         ]}
                     />
                     <div style={{ marginTop: "1rem" }}>
-                        <p style={{ marginTop: "1rem", fontSize: "0.9rem", color: "#ccc" }}>
+                        <p className="read-the-docs">
                             Edge Color Legend (Confidence Score)
                         </p>
                         <div style={{
@@ -176,22 +235,30 @@ function Interactions() {
                             <p style={{ fontSize: "0.9rem", lineHeight: "1.4" }}>
                                 {selectedNode.description || "No description available."}
                             </p>
-                            <a
-                                href={`https://string-db.org/network/${selectedNode.id}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                style={{
-                                    display: "inline-block",
-                                    marginTop: "0.5rem",
-                                    fontSize: "0.85rem",
-                                    color: "#4ea1ff",
-                                    textDecoration: "underline"
-                                }}
-                            >
-                                🔗 View in STRING-db
-                            </a>
+
+                            {viewUrl ? (
+                                <a
+                                    href={viewUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style={{
+                                        display: "inline-block",
+                                        marginTop: "0.5rem",
+                                        fontSize: "0.85rem",
+                                        color: "#4ea1ff",
+                                        textDecoration: "underline"
+                                    }}
+                                >
+                                    🔗 View full STRING-db network
+                                </a>
+                            ) : (
+                                <p style={{ fontSize: "0.8rem", marginTop: "0.5rem", color: "#999" }}>
+                                    STRING link unavailable for this node.
+                                </p>
+                            )}
                         </div>
                     )}
+
 
                     <button
                         onClick={() => {
@@ -204,6 +271,22 @@ function Interactions() {
                         style={{ marginTop: "1rem" }}
                     >
                         ⬇️ Download PNG
+                    </button>
+
+                    <button
+                        onClick={clearAll}
+                        style={{
+                            marginTop: "0.5rem",
+                            marginLeft: "1rem",
+                            background: "#333",
+                            color: "#fff",
+                            borderRadius: "6px",
+                            padding: "0.5rem 1rem",
+                            border: "1px solid #555",
+                            cursor: "pointer"
+                        }}
+                    >
+                        🔁 Try another gene
                     </button>
                 </div>
             )}

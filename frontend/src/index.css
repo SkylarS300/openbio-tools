@@ -17,22 +17,78 @@ a {
   font-weight: 500;
   color: #646cff;
   text-decoration: inherit;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
 }
+
 a:hover {
   color: #535bf2;
+  background-color: #333;
+}
+
+a.active {
+  background-color: #333;
+  color: #fff;
 }
 
 body {
   margin: 0;
   display: flex;
-  place-items: center;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
   min-width: 320px;
   min-height: 100vh;
+  padding: 2rem;
 }
 
 h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+}
+
+p {
+  font-size: 1.1rem;
+  color: #ccc;
+  max-width: 600px;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+nav {
+  display: flex;
+  gap: 1rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  background: #1e1e1e;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  position: sticky;
+  top: 1rem;
+  z-index: 100;
+}
+
+ul.tool-list {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0;
+}
+
+ul.tool-list li {
+  margin-bottom: 0.75rem;
+  font-size: 1.1rem;
+}
+
+ul.tool-list li a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #61dafb;
+  transition: color 0.2s ease;
+}
+
+ul.tool-list li a:hover {
+  color: #91e2ff;
 }
 
 button {
@@ -46,9 +102,11 @@ button {
   cursor: pointer;
   transition: border-color 0.25s;
 }
+
 button:hover {
   border-color: #646cff;
 }
+
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
@@ -59,9 +117,11 @@ button:focus-visible {
     color: #213547;
     background-color: #ffffff;
   }
+
   a:hover {
     color: #747bff;
   }
+
   button {
     background-color: #f9f9f9;
   }
@@ -76,11 +136,11 @@ button:focus-visible {
   line-height: 1.3;
   padding: 6px 10px;
 }
+
 .qtip {
   z-index: 9999 !important;
   box-sizing: border-box;
 }
-
 
 .qtip-dark {
   background: #333;

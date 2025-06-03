@@ -44,6 +44,10 @@ def fetch_interactions(data: InteractionRequest):
 
         string_id = id_data[0]["stringId"]
 
+        # STEP 1.5: Get redirect URL
+        view_url = f"https://string-db.org/cgi/network.pl?identifier={string_id}&species=9606"
+
+
         # STEP 2: Fetch interactions using that STRING ID
         net_url = "https://string-db.org/api/json/network"
         net_params = {
@@ -114,9 +118,25 @@ def fetch_interactions(data: InteractionRequest):
         print("Sample node response:")
         print(nodes)
 
+        # STEP 7: Build a view-in-STRING link for the central protein
+        link_url = "https://string-db.org/api/json/get_link"
+        link_params = {
+            "identifiers": string_id,
+            "species": 9606,
+            "caller_identity": "openbio-tools"
+        }
+        link_response = requests.get(link_url, params=link_params)
+        view_url = None
+        if link_response.status_code == 200:
+            link_data = link_response.json()
+            if link_data and "stringUrl" in link_data[0]:
+                view_url = link_data[0]["stringUrl"]
+
+
         return {
             "nodes": list(nodes.values()),
-            "edges": edges
+            "edges": edges,
+            "view_url": view_url
         }
 
     except Exception as e:

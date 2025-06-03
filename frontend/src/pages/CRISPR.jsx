@@ -1,14 +1,34 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 function CRISPR() {
-    const [sequence, setSequence] = useState("");
+    const [sequence, setSequence] = useState(() => localStorage.getItem("sequence") || "");
     const [guides, setGuides] = useState([]);
     const [filteredGuides, setFilteredGuides] = useState([]);
     const [error, setError] = useState("");
-    const [minGC, setMinGC] = useState(40);
-    const [maxGC, setMaxGC] = useState(60);
-    const [minScore, setMinScore] = useState(0);
-    const [sortBy, setSortBy] = useState("score"); // new
+    const [minGC, setMinGC] = useState(() => Number(localStorage.getItem("minGC")) || 40);
+    const [maxGC, setMaxGC] = useState(() => Number(localStorage.getItem("maxGC")) || 60);
+    const [minScore, setMinScore] = useState(() => Number(localStorage.getItem("minScore")) || 0);
+    const [sortBy, setSortBy] = useState(() => localStorage.getItem("sortBy") || "score");
+
+    useEffect(() => {
+        localStorage.setItem("sequence", sequence);
+    }, [sequence]);
+
+    useEffect(() => {
+        localStorage.setItem("minGC", minGC);
+    }, [minGC]);
+
+    useEffect(() => {
+        localStorage.setItem("maxGC", maxGC);
+    }, [maxGC]);
+
+    useEffect(() => {
+        localStorage.setItem("minScore", minScore);
+    }, [minScore]);
+
+    useEffect(() => {
+        localStorage.setItem("sortBy", sortBy);
+    }, [sortBy]);
 
     const fetchGuides = async (e) => {
         e.preventDefault();
@@ -59,6 +79,32 @@ function CRISPR() {
         setFilteredGuides(filtered);
     };
 
+    const clearSession = () => {
+        localStorage.clear();
+        setSequence("");
+        setGuides([]);
+        setFilteredGuides([]);
+        setError("");
+        setMinGC(40);
+        setMaxGC(60);
+        setMinScore(0);
+        setSortBy("score");
+    };
+
+    const highlightSequence = () => {
+        if (filteredGuides.length === 0 || !sequence) return sequence;
+        let highlighted = sequence;
+        // Sort guides descending to avoid overlap issues
+        const sorted = [...filteredGuides].sort((a, b) => b.start - a.start);
+        sorted.forEach((g, i) => {
+            const before = highlighted.slice(0, g.start);
+            const match = highlighted.slice(g.start, g.start + g.guide.length);
+            const after = highlighted.slice(g.start + g.guide.length);
+            highlighted = `${before}<mark>${match}</mark>${after}`;
+        });
+        return highlighted;
+    };
+
     return (
         <div style={{ padding: "2rem", fontFamily: "Arial" }}>
             <h1>🧬 CRISPR Guide Picker</h1>
@@ -93,7 +139,6 @@ function CRISPR() {
                     />
                 </div>
 
-
                 <div style={{ marginTop: "1rem" }}>
                     <label>Minimum Score: {minScore}</label>
                     <br />
@@ -126,6 +171,9 @@ function CRISPR() {
                 <button type="submit" style={{ marginTop: "1rem" }}>
                     Find Guides
                 </button>
+                <button type="button" onClick={clearSession} style={{ marginLeft: "1rem", backgroundColor: "#444", color: "#fff", border: "none", padding: "0.5rem 1rem", borderRadius: "5px" }}>
+                    Clear Session
+                </button>
             </form>
 
             {error && <p style={{ color: "red" }}>{error}</p>}
@@ -140,38 +188,42 @@ function CRISPR() {
                         📄 Export as CSV
                     </button>
 
-                <table style={{
-                    width: "100%",
-                    borderCollapse: "collapse",
-                    marginTop: "1rem",
-                    fontSize: "0.95rem"
-                }}>
-                    <thead style={{ backgroundColor: "#f2f2f2" }}>
-                        <tr>
-                            <th style={{ padding: "0.5rem", border: "1px solid #ccc" }}>Guide</th>
-                            <th style={{ padding: "0.5rem", border: "1px solid #ccc" }}>Start</th>
-                            <th style={{ padding: "0.5rem", border: "1px solid #ccc" }}>Strand</th>
-                            <th style={{ padding: "0.5rem", border: "1px solid #ccc" }}>PAM</th>
-                            <th style={{ padding: "0.5rem", border: "1px solid #ccc" }}>GC%</th>
-                            <th style={{ padding: "0.5rem", border: "1px solid #ccc" }}>Score</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filteredGuides.map((g, idx) => (
-                            <tr key={idx}>
-                                <td style={{ padding: "0.5rem", border: "1px solid #ccc", fontFamily: "monospace" }}><code>{g.guide}</code></td>
-                                <td style={{ padding: "0.5rem", border: "1px solid #ccc" }}>{g.start}</td>
-                                <td style={{ padding: "0.5rem", border: "1px solid #ccc" }}>{g.strand}</td>
-                                <td style={{ padding: "0.5rem", border: "1px solid #ccc" }}>{g.pam}</td>
-                                <td style={{ padding: "0.5rem", border: "1px solid #ccc" }}>{g.gc}%</td>
-                                <td style={{ padding: "0.5rem", border: "1px solid #ccc" }}>{g.score}</td>
+                    <div style={{ backgroundColor: "#f7f7f7", padding: "1rem", borderRadius: "6px", fontFamily: "monospace", fontSize: "0.95rem" }}>
+                        <div dangerouslySetInnerHTML={{ __html: highlightSequence() }} />
+                    </div>
+
+                    <table style={{
+                        width: "100%",
+                        borderCollapse: "collapse",
+                        marginTop: "1rem",
+                        fontSize: "0.95rem"
+                    }}>
+                        <thead style={{ backgroundColor: "#f2f2f2" }}>
+                            <tr>
+                                <th style={{ padding: "0.5rem", border: "1px solid #ccc" }}>Guide</th>
+                                <th style={{ padding: "0.5rem", border: "1px solid #ccc" }}>Start</th>
+                                <th style={{ padding: "0.5rem", border: "1px solid #ccc" }}>Strand</th>
+                                <th style={{ padding: "0.5rem", border: "1px solid #ccc" }}>PAM</th>
+                                <th style={{ padding: "0.5rem", border: "1px solid #ccc" }}>GC%</th>
+                                <th style={{ padding: "0.5rem", border: "1px solid #ccc" }}>Score</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-)}
-        </div >
+                        </thead>
+                        <tbody>
+                            {filteredGuides.map((g, idx) => (
+                                <tr key={idx}>
+                                    <td style={{ padding: "0.5rem", border: "1px solid #ccc", fontFamily: "monospace" }}><code>{g.guide}</code></td>
+                                    <td style={{ padding: "0.5rem", border: "1px solid #ccc" }}>{g.start}</td>
+                                    <td style={{ padding: "0.5rem", border: "1px solid #ccc" }}>{g.strand}</td>
+                                    <td style={{ padding: "0.5rem", border: "1px solid #ccc" }}>{g.pam}</td>
+                                    <td style={{ padding: "0.5rem", border: "1px solid #ccc" }}>{g.gc}%</td>
+                                    <td style={{ padding: "0.5rem", border: "1px solid #ccc" }}>{g.score}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
+        </div>
     );
 }
 
@@ -200,6 +252,5 @@ function downloadCSV(data) {
     link.click();
     document.body.removeChild(link);
 }
-
 
 export default CRISPR;
