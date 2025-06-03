@@ -1,33 +1,59 @@
-# OpenBio Tools 🧬
+# 🧬 OpenBio Tools
 
-OpenBio Tools is an open-source biology toolkit built to support learning, exploration, and research. It features interactive visualizations and lightweight analytical tools designed to make molecular biology more accessible. 
-
-### 🚀 Features
-
-- **Protein-Protein Interaction Explorer**  
-  Input a human gene (e.g. `TP53`) to visualize known interactions via STRING-db. Explore confidence scores, read protein summaries, and export the network as an image.
-
-- **Coming Soon: ORF Analyzer**  
-  Translate gene sequences into open reading frames for downstream bioinformatics work.
-
-- **Planned Modules**  
-  RNA-seq visualizer, CRISPR guide picker, and customizable educational overlays.
+**OpenBio Tools** is an open-source biology toolkit designed for students, educators, and researchers. It features interactive visualizations and lightweight analytical tools that make molecular biology more accessible, hands-on, and intuitive.
 
 ---
 
-### 🛠️ Tech Stack
+## 🚀 Live Features
 
-- **Frontend:** React, Cytoscape.js, Cytoscape-qtip  
-- **Backend:** FastAPI (Python 3.12)  
-- **Data Sources:** STRING-db  
-- **Deployment:** Vercel (frontend), Render (backend)
+### 🔗 Protein-Protein Interaction Explorer
+- Input a human gene (e.g. `TP53`) to visualize known interactions using **STRING-db**
+- Interactive Cytoscape.js network with:
+  - Color-coded edges by confidence score
+  - Node descriptions and tooltips
+  - STRING-db linkouts
+  - Export as PNG
+  - Highlight on selection
+
+### 🧪 ORF Translator
+- Paste a DNA sequence to visualize all 6 open reading frames
+- Translated amino acid chains for each frame
+- Highlights valid ORFs (start→stop codons)
+- Useful for gene model inspection and primer design
+
+### 📊 RNA-Seq Visualizer
+- Upload expression datasets (e.g. log2FC values, p-values)
+- View gene-wise plots including:
+  - Volcano plots
+  - Expression bar charts
+  - Gene detail views
+- Ideal for quick analysis of DE genes
+
+### 🧬 CRISPR Guide Picker
+- Paste a DNA sequence to scan for gRNA targets
+- Detects PAM sequences (NGG), computes:
+  - GC content
+  - Off-target potential (basic filtering)
+  - Positioning and orientation
+- Results table with export and filtering tools
 
 ---
 
-### 📦 Getting Started
+## 🛠️ Tech Stack
+
+| Layer     | Stack                                     |
+|-----------|-------------------------------------------|
+| Frontend  | React, Cytoscape.js, cytoscape-qtip       |
+| Backend   | FastAPI (Python 3.12)                     |
+| Data APIs | [STRING-db](https://string-db.org)        |
+| Deploy    | Vercel (frontend), Render (backend)       |
+
+---
+
+## 📦 Getting Started
 
 ```bash
-git clone https://github.com/YOUR-USERNAME/openbio-tools.git
+git clone https://github.com/SkylarS300/openbio-tools.git
 cd openbio-tools
 npm install
 npm run dev
