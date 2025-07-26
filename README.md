@@ -40,7 +40,7 @@ Each guide is filtered by GC content and predictive on-target score. Supports in
 Clone and run the development server:
 
 ```bash
-git clone https://github.com/YOUR-USERNAME/openbio-tools.git
+git clone https://github.com/SkylarS300/openbio-tools.git
 cd openbio-tools
 npm install
 npm run dev
